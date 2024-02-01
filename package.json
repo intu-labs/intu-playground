@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@intuweb3/exp-web": "0.99.64",
+    "@intuweb3/exp-web": "0.99.66",
     "@noble/secp256k1": "^2.0.0",
     "@polybase/client": "^0.6.6",
     "@polybase/eth": "^0.6.6",

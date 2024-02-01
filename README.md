@@ -1,6 +1,10 @@
 If you want to use the automated registration (less clicks)...  
 Edit the .env.example file to input some private keys and your Sepolia infura endpoint ID, and rename the file to .env
 
+**The following demo is meant to be ran on Sepolia**
+
+npm i && npm start
+
 You have 2 options to test this:
 
 1. You can run in a single browser and keep switching accounts as needed (for pre-registration, automate, and storing data)

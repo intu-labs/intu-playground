@@ -1,10 +1,9 @@
 import "./App.css";
 import { ethers } from "ethers";
-import { FC, useState, useEffect } from "react";
+import { useState } from "react";
 
 import {
   getVaults,
-  getReSharingStatus,
   vaultCreation,
   preRegistration,
   completeVault,
@@ -12,49 +11,46 @@ import {
   automateRegistration,
   signTx,
   combineSignedTx,
-  reShareStep1,
-  reShareStep2,
-  reShareStep3,
-  proposeAddUserInVault,
   registerAllSteps,
   getUserRegistrationAllInfos,
-  getRotationVaultAddresses,
-  getRegistrationStatus,
-} from "@intuweb3/web";
+  registerStep1,
+  registerStep2,
+  registerStep3,
+} from "@intuweb3/exp-web";
 
-const jsonRpcProvider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.JSONRPCID}`);
+const jsonRpcProvider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.REACT_APP_JSONRPCID}`);
 const provider = new ethers.providers.Web3Provider(window.ethereum);
 await provider.send("eth_requestAccounts", []);
 const signer = await provider.getSigner();
 const signerAddress = await provider.getSigner().getAddress();
-const erc721Interface = new ethers.utils.Interface(["function safeTransferFrom(address _from, address _to, uint256 _tokenId)"]);
 let myIntuAccounts = await getVaults(signerAddress, provider);
-let currentVault = myIntuAccounts[myIntuAccounts.length - 1];
+console.log(myIntuAccounts);
+let currentVault = myIntuAccounts && myIntuAccounts[myIntuAccounts.length - 1];
 let myVaultAddress = myIntuAccounts.length > 0 ? myIntuAccounts[myIntuAccounts.length - 1].vaultAddress : "0x1";
-console.log("myVaults: ", myIntuAccounts);
-console.log("latestvault: ", currentVault);
-console.log("myVaultAddress: ", myVaultAddress);
-let myRotationVaults = await getRotationVaultAddresses(signerAddress, provider);
-if (myVaultAddress === "0x1" && myRotationVaults.length > 0) {
-  myVaultAddress = myRotationVaults[myRotationVaults.length - 1];
-}
-
-if (myVaultAddress !== "0x1") {
-  let resharingStatus = await getReSharingStatus(myVaultAddress, signerAddress, provider);
-  let registrationStatus = await getRegistrationStatus(myVaultAddress, signerAddress, provider);
-}
 
 let vCreate = async () => {
   const proposedAddresses = [
-    "0x1111111111111111111111111111111111111111", // FILL IN YOUR ADDRESSES HERE
-    "0x2222222222222222222222222222222222222222", // FILL IN YOUR ADDRESSES HERE
-    "0x3333333333333333333333333333333333333333", // FILL IN YOUR ADDRESSES HERE
+    "0x633FEedCda014E7C095f406A697918838F523508", // FILL IN YOUR PUBLIC ADDRESS HERE
+    "0x947c2A79A4009E8f19a14a5437373d9239298558", // FILL IN YOUR PUBLIC ADDRESS HERE
+    "0x20acAE41C32F33Dcf862Da6A24a45f860bc88A46", // FILL IN YOUR PUBLIC ADDRESS HERE
   ];
-  await vaultCreation(proposedAddresses, "New Vault", 60, 60, 60, signer);
+  await vaultCreation(proposedAddresses, "New Intu Vault", 66, 66, 66, signer); // the 66 is a percentage, we are setting up a 2(t) of 3(n) scheme
 };
 
 let preReg = async () => {
   await preRegistration(myVaultAddress, signer);
+};
+
+let regStep1 = async () => {
+  await registerStep1(myVaultAddress, signer);
+};
+
+let regStep2 = async () => {
+  await registerStep2(myVaultAddress, signer);
+};
+
+let regStep3 = async () => {
+  await registerStep3(myVaultAddress, signer);
 };
 
 let cVault = async () => {
@@ -62,6 +58,10 @@ let cVault = async () => {
 };
 
 let submitTx = async () => {
+  //The following commented code is an example to create perform a token transfer in a transaction
+  {
+    /*
+  const erc721Interface = new ethers.utils.Interface(["function safeTransferFrom(address _from, address _to, uint256 _tokenId)"]);
   //let contractInterface = new ethers.utils.Interface(contractJson.abi);
   //let encodedCommand = contractInterface.encodeFunctionData("proposeTransaction", ["0x1234567890"]);
   //const data = erc721Interface.encodeFunctionData("safeTransferFrom", [
@@ -69,14 +69,15 @@ let submitTx = async () => {
   //  "0x94fD43dE0095165eE054554E1A84ccEfa8fdA47F",
   //  4,
   //]);
-
-  let chainId = "11155111";
-  let value = "0.001";
-  let to = "0xDf3e004BAB3b32110Bb495C0fd5DE25e0144880c"; //contract address in case of token transfer
-  let gasPrice = "";
-  let gas = "";
-  let nonce = 0;
-  let data = "";
+  */
+  }
+  let chainId = "11155111"; //this is sepolia chainid
+  let value = "0.01"; //in eth
+  let to = "0x633FEedCda014E7C095f406A697918838F523508"; //address you want to send tokens to... contract address in case of token transfer
+  let gasPrice = ""; //determined by protocol, or you can enter your own
+  let gas = ""; //determined by protocol, or you can enter your own
+  let nonce = 0; //needs to be incremeneted for each transaction
+  let data = ""; //for sending transactions, etc
   await submitTransaction(to, value, String(chainId), String(nonce), data, gasPrice, gas, myVaultAddress, signer);
 };
 
@@ -88,7 +89,7 @@ let signTransactions = async () => {
 let combineTx = async () => {
   let txId = 1;
   let hash = await combineSignedTx(myVaultAddress, txId, signer);
-  let p = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/a6122371120a4819ae02bac868b9d07a");
+  let p = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.REACT_APP_JSONRPCID}`);
   p.sendTransaction(hash.combinedTxHash.finalSignedTransaction)
     .then((txResponse) => {
       console.log("Transaction Hash:", txResponse.hash);
@@ -96,62 +97,13 @@ let combineTx = async () => {
     .catch((error) => {
       console.error("Failed to send transaction:", error);
     });
-};
-
-let resharePre = async () => {
-  await preRegistration(myVaultAddress, signer);
-};
-
-let reshareStep1Group = async () => {
-  await reShareStep1(myVaultAddress, signer);
-};
-
-let reshareStep1New = async () => {
-  await reShareStep1(myVaultAddress, signer);
-};
-
-let reshareStep2 = async () => {
-  await reShareStep2(myVaultAddress, signer);
-};
-
-let reshareStep3 = async () => {
-  await reShareStep3(myVaultAddress, signer);
-};
-
-let reshareSign = async () => {
-  let txId = 1;
-  await signTx(myVaultAddress, txId, signer);
-};
-
-let regAll = async () => {
-  await registerAllSteps(myVaultAddress, signer);
-};
-
-let reshareCombine = async () => {
-  let txId = 1;
-  let hash = await combineSignedTx(myVaultAddress, txId, signer);
-  //let p = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
-  let p = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/a6122371120a4819ae02bac868b9d07a");
-  console.log(hash.combinedTxHash.finalSignedTransaction);
-  p.sendTransaction(hash.combinedTxHash.finalSignedTransaction)
-    .then((txResponse) => {
-      console.log("Transaction Hash:", txResponse.hash);
-    })
-    .catch((error) => {
-      console.error("Failed to send transaction:", error);
-    });
-};
-
-let proposeUser = async () => {
-  //0x633FEedCda014E7C095f406A697918838F523508
-  let proposedRotationAddress = "0xC29Cd9FF0460b9C9bBC4b410eB175512431bb5b7";
-  await proposeAddUserInVault(myVaultAddress, proposedRotationAddress, signer);
 };
 
 function App() {
   const [loading, setLoading] = useState(false);
+  const [tokens, setTokens] = useState("");
 
-  let ar = async () => {
+  let automaticRegistration = async () => {
     setLoading(true);
     try {
       await automateRegistration(myVaultAddress, signerAddress, signer).then(async (result) => {
@@ -170,51 +122,75 @@ function App() {
     setLoading(false);
   };
 
+  if (currentVault && currentVault.masterPublicAddress) {
+    provider.getBalance(currentVault.masterPublicAddress).then((balance) => {
+      const balanceInEth = ethers.utils.formatEther(balance);
+      setTokens(balanceInEth);
+    });
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <div>INTU</div>
-        <div>Your EOA: {signerAddress}</div>
-        <div>Vault Contract: {myVaultAddress ? myVaultAddress : "n/a"}</div>
-        <div>Vault EOA: {currentVault.masterPublicAddress ? currentVault.masterPublicAddress : "n/a"}</div>
+        <div>
+          <small>Your EOA: {signerAddress}</small>
+        </div>
+        <div>Vault MPC EOA: {currentVault && currentVault.masterPublicAddress ? currentVault.masterPublicAddress : "MPC not complete"}</div>
+        <div>MPC Balance: {currentVault && currentVault.masterPublicAddress ? tokens : "0"}</div>
         {!loading ? (
           <>
-            <button onClick={() => vCreate()}>vault create</button>
+            {myIntuAccounts.length === 0 ? <button onClick={() => vCreate()}>vault create</button> : ""}
             {myIntuAccounts.length > 0 ? (
               <>
-                <button onClick={() => preReg()}>pre register</button>
-                <button onClick={() => ar()}>automateRegistration</button>
-                <button onClick={() => regAll()}>store my keys / finalize registration</button>
-                <button onClick={() => cVault()}>completeVault</button>
+                {myIntuAccounts.length > 0 && currentVault.masterPublicAddress === "" ? (
+                  <>
+                    <div style={{ border: "1px solid #333", backgroundColor: "lightblue", borderRadius: "5px", padding: "10px" }}>
+                      <div>
+                        Perform the registration steps in this BLUE box if you do not setup private keys in the .env file to perform the automatic
+                        registration.
+                      </div>
+                      <br />
+                      <button onClick={() => preReg()}>pre register</button>
+                      <button onClick={() => regStep1()}>regStep1</button>
+                      <button onClick={() => regStep2()}>regStep2</button>
+                      <button onClick={() => regStep3()}>regStep3</button>
+                      <button onClick={() => cVault()}>completeVault</button>
+                    </div>
+                    <br />
+                    <div style={{ border: "1px solid #333", backgroundColor: "purple", borderRadius: "5px", padding: "10px" }}>
+                      <div>
+                        Perform the registration steps in this PURPLE box if you do setup private keys and have 3 different browsers open with each
+                        running the wallet for each key.
+                      </div>
+                      <br />
+                      <button onClick={() => preReg()}>pre register</button>
+                      <button onClick={() => automaticRegistration()}>automateRegistration</button>
+                      <button onClick={() => cVault()}>completeVault</button>
+                    </div>
+                  </>
+                ) : (
+                  ""
+                )}
+                {myIntuAccounts && myIntuAccounts[myIntuAccounts.length - 1].masterPublicAddress !== "" ? (
+                  <div style={{ border: "1px solid #333", backgroundColor: "green", borderRadius: "5px", padding: "10px" }}>
+                    <div>Now that you have a master public address for your MPC account - you can submit, sign and combine/send the transaction.</div>
+                    <div>Keep in mind, you will need to fund the MPC public address before sending funds from it.</div>
+                    <br />
+                    <button onClick={() => submitTx()}>submittx</button>
+                    <button onClick={() => signTransactions()}>signtx</button>
+                    <button onClick={() => combineTx()}>combinetx</button>
+                  </div>
+                ) : (
+                  ""
+                )}
               </>
             ) : (
               ""
             )}
-            {myIntuAccounts && myIntuAccounts[myIntuAccounts.length - 1].masterPublicAddress !== "" ? (
-              <>
-                <button onClick={() => submitTx()}>submittx</button>
-                <button onClick={() => signTransactions()}>signtx</button>
-                <button onClick={() => combineTx()}>combinetx</button>
-              </>
-            ) : (
-              ""
-            )}
-            <hr />
-            <hr />
-            {/*
-            <div>Resharing tests</div>
-            <button onClick={() => proposeUser()}>proposeUser</button>
-            <button onClick={() => resharePre()}>reshare pre</button>
-            <button onClick={() => reshareStep1Group()}>reshare step 1 group</button>
-            <button onClick={() => reshareStep1New()}>reshare step 1 new</button>
-            <button onClick={() => reshareStep2()}>reshare step 2</button>
-            <button onClick={() => reshareStep3()}>reshare step 3</button>
-            <button onClick={() => reshareSign()}>reshare sign tx</button>
-            <button onClick={() => reshareCombine()}>reshare combine signatures</button>
-        */}
           </>
         ) : (
-          "waiting on others...."
+          ""
         )}
       </header>
     </div>
