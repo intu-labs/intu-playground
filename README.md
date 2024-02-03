@@ -1,3 +1,6 @@
+\*Video showing manual registration setup (pure blockchain): https://drive.google.com/file/d/1MqzW4eo6WIyVV1MibTqgKWJ_MCc1_z2j/view?usp=sharing
+
+\*Video showing automatic registration setup(decentralized database): https://drive.google.com/file/d/1l0cJBWVhG0HEKmEmKFEwDqzJ9rNzoDcW/view?usp=sharing
 **The following demo is meant to be ran on Sepolia**
 
 npm i && npm start
