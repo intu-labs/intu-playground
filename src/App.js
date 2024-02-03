@@ -57,6 +57,11 @@ let cVault = async () => {
   await completeVault(myVaultAddress, signer);
 };
 
+//shouldn't be needed as long as everyone is online
+//let regAll = async () => {
+//  await registerAllSteps(myVaultAddress, signer);
+//};
+
 let submitTx = async () => {
   //The following commented code is an example to create perform a token transfer in a transaction
   {
@@ -71,7 +76,7 @@ let submitTx = async () => {
   //]);
   */
   }
-  let chainId = "11155111"; //this is sepolia chainid
+  let chainId = "1351057110"; //this is sepolia chainid //skale 1351057110
   let value = "0.01"; //in eth
   let to = "0x633FEedCda014E7C095f406A697918838F523508"; //address you want to send tokens to... contract address in case of token transfer
   let gasPrice = ""; //determined by protocol, or you can enter your own
@@ -90,6 +95,7 @@ let combineTx = async () => {
   let txId = 1;
   let hash = await combineSignedTx(myVaultAddress, txId, signer);
   let p = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.REACT_APP_JSONRPCID}`);
+  // skale testnet https://staging-v3.skalenodes.com/v1/staging-fast-active-bellatrix
   p.sendTransaction(hash.combinedTxHash.finalSignedTransaction)
     .then((txResponse) => {
       console.log("Transaction Hash:", txResponse.hash);
@@ -102,15 +108,17 @@ let combineTx = async () => {
 function App() {
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState("");
+  const buildMultipleVaults = true;
 
   let automaticRegistration = async () => {
     setLoading(true);
     try {
       await automateRegistration(myVaultAddress, signerAddress, signer).then(async (result) => {
         let isRegistered = await getUserRegistrationAllInfos(myVaultAddress, signerAddress, provider);
-        console.log(isRegistered);
-        if (isRegistered.regsistered === true) {
+        console.log(isRegistered.registered);
+        if (isRegistered.registered === false) {
           await registerAllSteps(myVaultAddress, signer);
+          console.log("registerallstepsdone");
         }
         return true;
       });
@@ -140,12 +148,12 @@ function App() {
         <div>MPC Balance: {currentVault && currentVault.masterPublicAddress ? tokens : "0"}</div>
         {!loading ? (
           <>
-            {myIntuAccounts.length === 0 ? <button onClick={() => vCreate()}>vault create</button> : ""}
+            <button onClick={() => vCreate()}>vault create</button>
             {myIntuAccounts.length > 0 ? (
               <>
-                {myIntuAccounts.length > 0 && currentVault.masterPublicAddress === "" ? (
+                {(myIntuAccounts.length > 0 && currentVault.masterPublicAddress === "") || buildMultipleVaults ? (
                   <>
-                    <div style={{ border: "1px solid #333", backgroundColor: "lightblue", borderRadius: "5px", padding: "10px" }}>
+                    <div style={{ border: "1px solid #333", backgroundColor: "blue", borderRadius: "5px", padding: "10px" }}>
                       <div>
                         Perform the registration steps in this BLUE box if you do not setup private keys in the .env file to perform the automatic
                         registration.
@@ -158,7 +166,8 @@ function App() {
                       <button onClick={() => cVault()}>completeVault</button>
                     </div>
                     <br />
-                    <div style={{ border: "1px solid #333", backgroundColor: "purple", borderRadius: "5px", padding: "10px" }}>
+                    <br />
+                    <div style={{ border: "1px solid #333", backgroundColor: "purple", borderRadius: "5px", padding: "10px", marginTop: "25px" }}>
                       <div>
                         Perform the registration steps in this PURPLE box if you do setup private keys and have 3 different browsers open with each
                         running the wallet for each key.
