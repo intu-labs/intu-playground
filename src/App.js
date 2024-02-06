@@ -76,7 +76,7 @@ let submitTx = async () => {
   //]);
   */
   }
-  let chainId = "1351057110"; //this is sepolia chainid //skale 1351057110
+  let chainId = "11155111"; //this is sepolia chainid //skale 1351057110
   let value = "0.01"; //in eth
   let to = "0x633FEedCda014E7C095f406A697918838F523508"; //address you want to send tokens to... contract address in case of token transfer
   let gasPrice = ""; //determined by protocol, or you can enter your own
